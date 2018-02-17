@@ -3,7 +3,8 @@
     "description": "test composer",
     "type": "project",
     "require": {
-        "nikic/fast-route": "^1.3"
+        "nikic/fast-route": "^1.3",
+        "nette/database": "^2.3"
     },
     "autoload": {
         "psr-4": {
