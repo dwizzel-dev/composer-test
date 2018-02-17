@@ -13,9 +13,9 @@ $Router->get('/', function(){
     echo "index";
 });
 
-$Router->get('/users', 'App\Core\Client@getAll');
+$Router->get('/users', 'App\Controller\Client@getAll');
 
-$Router->get('/users/{ClientId:[0-9]+}', 'App\Core\Client@getOne');
+$Router->get('/users/{ClientId:[0-9]+}', 'App\Controller\Client@getOne');
 
 $Router->get('/users/{name}/{ClientId:[0-9]+}', function($args, $extras = null){
     print_r($args);
