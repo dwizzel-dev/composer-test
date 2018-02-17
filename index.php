@@ -1,5 +1,7 @@
 <?php
 
+require_once 'define.php';
+
 require_once 'vendor/autoload.php';
 
 use \App\Core\Router;
@@ -13,9 +15,9 @@ $Router->get('/', function(){
 
 $Router->get('/users', 'App\Core\Client@getAll');
 
-$Router->get('/users/{id:[0-9]+}', 'App\Core\Client@getOne');
+$Router->get('/users/{ClientId:[0-9]+}', 'App\Core\Client@getOne');
 
-$Router->get('/users/{name}/{id:[0-9]+}', function($args, $extras = null){
+$Router->get('/users/{name}/{ClientId:[0-9]+}', function($args, $extras = null){
     print_r($args);
     print_r($extras);
 });
