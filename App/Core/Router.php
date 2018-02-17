@@ -6,26 +6,32 @@ use \FastRoute;
 
 class Router{
 
-    private $dispatcher;
-    private $uri;
-    private $method;
+    private static $inst;
+    private $allowed = ['get','post','put','delete','head'];
     private $cache;
     private $routes = [];
 
     public function __construct($cache = null){
-        $this->method = $_SERVER['REQUEST_METHOD'];
-        $this->uri = $_SERVER['REQUEST_URI'];
         if(isset($cache)){
             $this->cache = $cache;
         }
     }
 
+    public static function self(){
+        if(self::$inst === null){
+            self::$inst = new Router;
+        }
+        return self::$inst;
+    }
+
     public function __call($name, $arguments){
-        array_push($this->routes, [
-            "method" => $name,
-            "route" => $arguments[0],
-            "handler" => $arguments[1],
-        ]);
+        if(in_array($name, $this->allowed)) {
+            array_push($this->routes, [
+                "method" => $name,
+                "route" => $arguments[0],
+                "handler" => $arguments[1],
+            ]);
+        }
     }
 
     public function load(FastRoute\RouteCollector $routeCollector){
@@ -34,38 +40,67 @@ class Router{
         }
     }
 
-    public function route(){
-        if(isset($this->cache)){
-            $this->dispatcher = FastRoute\cachedDispatcher(array($this, 'load'),[
+    public function extras($query, &$arr){
+        foreach(explode("&", $query) as $v) {
+            if ($v != "") {
+                list($key, $val) = explode("=", $v);
+                if ($val != "") {
+                    $arr[$key] = $val;
+                }
+            }
+        }
+    }
+
+    public function callClassMethod($params){
+        try {
+            if (substr_count($params[1], "@")) {
+                list($class, $method) = explode('@', $params[1]);
+            } else {
+                throw new \Exception("invalid class::method call");
+            }
+            if (isset($class) && isset($method) && method_exists($class, $method)) {
+                (new $class)->{$method}($params[2], $params[3]);
+            } else {
+                throw new \Exception("class::method dont exist");
+            }
+        }catch (\Exception $exception){
+            var_dump($params);
+            var_dump($exception);
+        }
+    }
+
+    public function route()
+    {
+
+        if (isset($this->cache)) {
+            $dispatcher = FastRoute\cachedDispatcher(array($this, 'load'), [
                 'cacheFile' => $this->cache,
                 'cacheDisabled' => false
             ]);
-
-        }else{
-            $this->dispatcher = FastRoute\simpleDispatcher(array($this, 'load'));
+        } else {
+            $dispatcher = FastRoute\simpleDispatcher(array($this, 'load'));
         }
-        // Strip query string (?foo=bar) and decode URI
-        if (false !== $pos = strpos($this->uri, '?')) {
-            $this->uri = substr($this->uri, 0, $pos);
+        $url = parse_url($_SERVER['REQUEST_URI']);
+        $reqUri = $url["path"];
+        $reqMethod = $_SERVER['REQUEST_METHOD'];
+        $routeInfo = $dispatcher->dispatch($reqMethod, rawurldecode($reqUri));
+        $routeInfo[3] = [];
+        if (isset($url["query"])) {
+            $this->extras($url["query"], $routeInfo[3]);
         }
-        $routeInfo = $this->dispatcher->dispatch($this->method, rawurldecode($this->uri));
+        print_r($routeInfo);
         switch ($routeInfo[0]) {
             case FastRoute\Dispatcher::NOT_FOUND:
                 echo '404';
                 break;
             case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                echo '405:'.$routeInfo[1];
+                echo '405: '.$routeInfo[1];
                 break;
             case FastRoute\Dispatcher::FOUND:
-                if(is_string($routeInfo[1])) {
-                    list($class, $method) = explode('@', $routeInfo[1]);
-                    (new $class)->{$method}($routeInfo[2]);
-                }else{
-                    $routeInfo[1]($routeInfo[2]);
-                }
+                (is_string($routeInfo[1]))? $this->callClassMethod($routeInfo) : $routeInfo[1]($routeInfo[2], $routeInfo[3]);
                 break;
             default:
-                echo 'default';
+                echo '404';
                 break;
         }
 
