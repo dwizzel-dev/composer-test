@@ -7,6 +7,10 @@ use \App\Core\Router;
 //$Router = new Router(__DIR__.'/cache/route.cache');
 $Router = new Router();
 
+$Router->get('/', function(){
+    echo "index";
+});
+
 $Router->get('/users', 'App\Core\Client@getAll');
 
 $Router->get('/users/{id:[0-9]+}', 'App\Core\Client@getOne');

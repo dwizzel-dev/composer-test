@@ -81,9 +81,8 @@ class Router{
             $dispatcher = FastRoute\simpleDispatcher(array($this, 'load'));
         }
         $url = parse_url($_SERVER['REQUEST_URI']);
-        $reqUri = $url["path"];
         $reqMethod = $_SERVER['REQUEST_METHOD'];
-        $routeInfo = $dispatcher->dispatch($reqMethod, rawurldecode($reqUri));
+        $routeInfo = $dispatcher->dispatch($reqMethod, rawurldecode($url["path"]));
         $routeInfo[3] = [];
         if (isset($url["query"])) {
             $this->extras($url["query"], $routeInfo[3]);
