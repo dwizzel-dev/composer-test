@@ -21,7 +21,7 @@ class Client{
         }
     }
 
-    public static function getOne($args, $extras = null){
+    public static function getOne($args){
         $row = self::$clientModel->getOne($args["ClientId"]);
         if(!$row){
             echo "client [${args["ClientId"]}] dont exist".PHP_EOL;
@@ -30,11 +30,11 @@ class Client{
         }
     }
 
-    public static function updateOne($args, $extras = null){
+    public static function updateOne($args){
         echo "update one clients: ${args['id']}";
     }
 
-    public static function deleteOne($args, $extras = null){
+    public static function deleteOne($args){
         echo "delete one clients: ${args['id']}";
     }
 
